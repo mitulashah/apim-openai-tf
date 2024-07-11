@@ -84,6 +84,9 @@ resource "azurerm_api_management_api_policy" "global_open_ai_policy" {
   xml_content = data.template_file.global_open_ai_policy.rendered
 }
 
+// Below are resources for the Application Gateway Component
+
+/*
 
 resource "azurerm_virtual_network" "vnet" {
   name = format("vnet-%s", local.resource_suffix_kebabcase)
@@ -237,3 +240,5 @@ resource "azurerm_application_gateway" "agw" {
     backend_http_settings_name = "agw-apim-poc-http-settings"
   }
 }
+
+*/

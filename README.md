@@ -1,1 +1,1 @@
-# apim-openai-tf
+# API Management + OpenAI via Terraform

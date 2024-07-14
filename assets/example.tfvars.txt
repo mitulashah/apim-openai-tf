@@ -1,0 +1,15 @@
+application                 = "apim"
+environment                 = "dev"
+region                      = "east"
+location                    = "eastus"
+owner_name                  = "John Doe"
+owner_email                 = "johndoe@contoso.com"
+apim_sku                    = "Developer"
+apim_units                  = 1
+open_ai_model               = "gpt-35-turbo"
+open_ai_model_version       = "0301"
+open_ai_capacity            = 5
+afd_host_name_prefix        = "apimdeveast01"
+waf_mode                    = "Prevention"
+waf_policy_name             = "wafapimdeveast01"
+resource_group_name_suffix  = "01"

@@ -72,6 +72,28 @@ variable "open_ai_capacity" {
   default     = 5
 }
 
+variable "afd_host_name_prefix" {
+  description = "The prefix for the .azurefd.net hostname"
+  type        = string
+  default     = "endpoint"
+}
+
+variable "waf_policy_name" {
+  description = "The name of the Web Application Firewall policy"
+  type        = string
+  default     = "waf-policy"
+}
+
+variable "waf_mode" {
+  description = "The mode of the Web Application Firewall"
+  type        = string
+  default     = "Prevention"
+  validation {
+    condition     = can(regex("(Detection|Prevention)", var.waf_mode))
+    error_message = "The WAF mode value must be a valid."
+  }
+}
+
 variable "resource_group_name_suffix" {
   type        = string
   default     = "01"

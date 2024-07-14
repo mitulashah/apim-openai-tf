@@ -20,13 +20,20 @@ resource "azurerm_api_management" "apim" {
 
 // TODO: add variable to define how many OpenAI endpoints to create
 resource "azurerm_api_management_api" "open_ai" {
-  name                = "api-azure-open-ai"
-  resource_group_name = azurerm_resource_group.rg.name
-  api_management_name = azurerm_api_management.apim.name
-  revision            = "1"
-  display_name        = "Azure Open API"
-  path                = "openai"
-  protocols           = ["https"]
+  name                  = "api-azure-open-ai"
+  resource_group_name   = azurerm_resource_group.rg.name
+  api_management_name   = azurerm_api_management.apim.name
+  revision              = "1"
+  display_name          = "Azure Open API"
+  path                  = "openai"
+  protocols             = ["https"]
+  subscription_required = true
+
+  // required to stay compatible with OpenAI SDKs
+  subscription_key_parameter_names {
+    header = "api-key"
+    query = "api-key"
+  }
 
   import {
     content_format = "openapi+json"

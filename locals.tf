@@ -15,4 +15,27 @@ locals {
       }
     )
   )
+
+  circuitBreaker = {
+    rules = [
+    {
+      name              = "circuitBreakerRule"
+      tripDuration      = "PT1H"
+      acceptRetryAfter  = true # for retry-after header
+      failureCondition  = {
+        count             = 3
+        errorReasons      = ["Server errors"]
+        interval          = "PT1H"
+        statusCodeRanges  = [
+          {
+            min = 429
+            max = 429
+          }, 
+          {
+            min = 500
+            max = 599
+          }]
+      }
+    }]
+  }
 }

@@ -4,6 +4,47 @@ resource "azurerm_resource_group" "rg" {
   tags     = local.tags
 }
 
+resource "azurerm_log_analytics_workspace" "log" {
+  name                = format("log-%s", local.resource_suffix_kebabcase) 
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+  sku                 = "PerGB2018"
+  retention_in_days   = 30
+  tags                = local.tags
+}
+
+resource "azurerm_application_insights" "appi" {
+  name                = format("appi-%s", local.resource_suffix_kebabcase) 
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+  workspace_id        = azurerm_log_analytics_workspace.log.id
+  application_type    = "web"
+  tags                = local.tags
+}
+
+resource "azurerm_api_management_logger" "apim-logger" {
+  name                 = format("apim-logger-%s", local.resource_suffix_kebabcase) 
+  resource_group_name  = azurerm_resource_group.rg.name
+  api_management_name  = azurerm_api_management.apim.name
+  
+  application_insights {
+    instrumentation_key = azurerm_application_insights.appi.instrumentation_key
+  }
+}
+
+resource "azurerm_api_management_diagnostic" "apim-logger-settings" {
+  identifier               = "applicationinsights"
+  resource_group_name      = azurerm_resource_group.rg.name
+  api_management_name      = azurerm_api_management.apim.name
+  api_management_logger_id = azurerm_api_management_logger.apim-logger.id
+
+  sampling_percentage       = 5.0
+  always_log_errors         = true
+  log_client_ip             = true
+  verbosity                 = "verbose"
+  http_correlation_protocol = "W3C"
+}
+
 resource "azurerm_api_management" "apim" {
   name                 = format("apim-%s", local.resource_suffix_kebabcase) 
   location             = azurerm_resource_group.rg.location
@@ -18,18 +59,18 @@ resource "azurerm_api_management" "apim" {
   }
 }
 
-// TODO: add variable to define how many OpenAI endpoints to create
+# Only need a single API in APIM
 resource "azurerm_api_management_api" "open_ai" {
-  name                  = "api-azure-open-ai"
+  name                  = "api-azure-open-ai" 
   resource_group_name   = azurerm_resource_group.rg.name
   api_management_name   = azurerm_api_management.apim.name
   revision              = "1"
-  display_name          = "Azure Open API"
-  path                  = "openai"
+  display_name          = "Azure OpenAI API" 
+  path                  = "openai" 
   protocols             = ["https"]
   subscription_required = true
 
-  // required to stay compatible with OpenAI SDKs
+  # required to stay compatible with OpenAI SDKs
   subscription_key_parameter_names {
     header = "api-key"
     query = "api-key"
@@ -41,14 +82,21 @@ resource "azurerm_api_management_api" "open_ai" {
   }
 }
 
+# ================================================================================================== 
+# Loop through OpenAI Endpoints
+# ================================================================================================== 
+
 resource "azurerm_cognitive_account" "open_ai" {
-  name                  = format("oai-%s", local.resource_suffix_kebabcase) 
-  location              = azurerm_resource_group.rg.location
+
+  for_each = var.open_ai_instances
+
+  name                  = format("aoai-%s-%s", each.key, local.resource_suffix_kebabcase) 
+  location              = each.value.location
   resource_group_name   = azurerm_resource_group.rg.name
   kind                  = "OpenAI"
   sku_name              = "S0"
   tags                  = local.tags
-  custom_subdomain_name = format("oai-%s", local.resource_suffix_kebabcase)
+  custom_subdomain_name = format("aoai-api-%s", each.key)
 
   identity {
     type = "SystemAssigned"
@@ -56,8 +104,11 @@ resource "azurerm_cognitive_account" "open_ai" {
 }
 
 resource "azurerm_cognitive_deployment" "chat_model" {
+
+  for_each = azurerm_cognitive_account.open_ai
+
   name                 = var.open_ai_model
-  cognitive_account_id = azurerm_cognitive_account.open_ai.id
+  cognitive_account_id = each.value.id
   model {
     format  = "OpenAI"
     name    = var.open_ai_model
@@ -70,21 +121,61 @@ resource "azurerm_cognitive_deployment" "chat_model" {
   }
 }
 
-resource "azurerm_role_assignment" "this" {
-  scope                = azurerm_cognitive_account.open_ai.id
+resource "azurerm_role_assignment" "role" {
+
+  for_each = azurerm_cognitive_account.open_ai
+
+  scope                = each.value.id
   role_definition_name = "Cognitive Services OpenAI User"
   principal_id         = azurerm_api_management.apim.identity[0].principal_id
 }
 
-resource "azurerm_api_management_backend" "open_ai" {
-  name                = "azure-open-ai-backend"
-  resource_group_name = azurerm_resource_group.rg.name
-  api_management_name = azurerm_api_management.apim.name
-  protocol            = "http" // TODO: https?
-  url                 = format("%sopenai", azurerm_cognitive_account.open_ai.endpoint)
+resource "azapi_resource" "backend" {
+
+  for_each = azurerm_cognitive_account.open_ai
+
+  type = "Microsoft.ApiManagement/service/backends@2023-05-01-preview"
+  name = format("aoai-backend-%s", each.key)
+  parent_id = azurerm_api_management.apim.id
+
+  body = {
+    properties = {
+      url = format("%sopenai", azurerm_cognitive_account.open_ai[each.key].endpoint)
+      protocol = "http"
+      circuitBreaker = local.circuitBreaker
+    }
+  }
+
+  schema_validation_enabled = false
+}
+
+resource "azapi_resource" "pool" {
+  type = "Microsoft.ApiManagement/service/backends@2023-05-01-preview"
+  name = "aoai-backend-pool"
+  parent_id = azurerm_api_management.apim.id
+
+  body = {
+    properties = {
+      description = "Load balancer for multiple Azure OpenAI backends (equal priority and weight)"
+      type = "Pool"
+      pool = {
+        services = [
+          for backend in azapi_resource.backend : {
+            id = backend.id
+            priority = 1
+            weight = 1
+          }
+        ]
+      }
+    }
+  }
+
+  schema_validation_enabled = false
 }
 
 resource "azurerm_api_management_api_policy" "global_open_ai_policy" {
+  depends_on = [ azapi_resource.pool ]
+
   api_name            = azurerm_api_management_api.open_ai.name
   resource_group_name = azurerm_resource_group.rg.name
   api_management_name = azurerm_api_management.apim.name

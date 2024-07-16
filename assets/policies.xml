@@ -1,6 +1,6 @@
 <policies>
     <inbound>
-        <set-backend-service backend-id="azure-open-ai-backend" />
+        <set-backend-service backend-id="aoai-backend-pool" />
         <authentication-managed-identity resource="https://cognitiveservices.azure.com" output-token-variable-name="msi-access-token" ignore-error="false" />
         <set-header name="Authorization" exists-action="override">
             <value>@("Bearer " + (string)context.Variables["msi-access-token"])</value>

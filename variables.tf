@@ -67,9 +67,23 @@ variable "open_ai_model_version" {
 }
 
 variable "open_ai_capacity" {
-  description = "The number of instances of the OpenAI model in thousands"
+  description = "The tokens-per-minute capacity of the OpenAI model in thousands"
   type        = number
   default     = 5
+}
+
+variable "open_ai_instances" {
+  description   = "List of OpenAI instances to create"
+  type = map(object({
+    location          = string
+    unique_indicator  = string
+  }))
+  default = {
+    instance1 = {
+      location          = "eastus"
+      unique_indicator  = "01"
+    }
+  }
 }
 
 variable "afd_host_name_prefix" {

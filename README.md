@@ -37,3 +37,4 @@ Some changes to the solution are breaking and will cause the solution to destroy
 
 ## Future Enhancements
 - Implement private networking for backend using private endpoints for OpenAI
+- Optionally deploy [Standard v2 SKU](https://learn.microsoft.com/en-us/azure/api-management/v2-service-tiers-overview)

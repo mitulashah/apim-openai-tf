@@ -2,14 +2,24 @@ application                 = "apim"
 environment                 = "dev"
 region                      = "east"
 location                    = "eastus"
-owner_name                  = "John Doe"
-owner_email                 = "johndoe@contoso.com"
+owner_name                  = "Joe User"
+owner_email                 = "joe@contoso.com"
 apim_sku                    = "Developer"
 apim_units                  = 1
 open_ai_model               = "gpt-35-turbo"
-open_ai_model_version       = "0301"
+open_ai_model_version       = "0613"
 open_ai_capacity            = 5
 afd_host_name_prefix        = "apimdeveast01"
 waf_mode                    = "Prevention"
 waf_policy_name             = "wafapimdeveast01"
 resource_group_name_suffix  = "01"
+open_ai_instances           = {
+                                instance1 = {
+                                    location = "eastus"
+                                    unique_indicator = "ms01"
+                                }
+                                instance2 =  {
+                                    location = "northcentralus"
+                                    unique_indicator = "ms02"
+                                }
+                              }

@@ -25,11 +25,15 @@ graph LR;
 
 ## Deployment Steps
 
-1. Create a terraform.tfvars file in the repo directory and set your variables.
+1. Create a terraform.tfvars file in the repo directory and set your variables.  You can leverage the [example](/assets/example.tfvars.txt) as a starting point.
 2. Run `az login` to ensure your Azure CLI is logged into your Azure account
 3. Run `terraform init` in your IDE's terminal to initialize the repo.
 4. Run `terraform plan --out plan.out`
 5. Run `terraform apply plan.out` to deploy the solution resources.
 
-## Additional Options
+_Note:_ You may need to run `terraform init -upgrade` depending on which version of the solution was initially deployed.  This command ensures appropriate resource providers are installed.
+
+Some changes to the solution are breaking and will cause the solution to destroy existing instances and recreate them.  Be sure to backup any existing work in your environment before running new versions of these Terraform scripts.
+
+## Future Enhancements
 - Implement private networking for backend using private endpoints for OpenAI

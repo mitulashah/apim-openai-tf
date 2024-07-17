@@ -1,5 +1,8 @@
 <policies>
     <inbound>
+        <check-header name="X-Azure-FDID" failed-check-httpcode="403" failed-check-error-message="Invalid request." ignore-case="false">
+            <value>{{frontdoor-header-id}}</value>
+        </check-header>
         <set-backend-service backend-id="aoai-backend-pool" />
         <authentication-managed-identity resource="https://cognitiveservices.azure.com" output-token-variable-name="msi-access-token" ignore-error="false" />
         <set-header name="Authorization" exists-action="override">

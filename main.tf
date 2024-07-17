@@ -287,3 +287,12 @@ resource "azurerm_cdn_frontdoor_security_policy" "waf-secure" {
     }
   }
 }
+
+# Create named value in APIM for Front Door ID for access restriction
+resource "azurerm_api_management_named_value" "afd-id" {
+  name                 = "frontdoor-header-id"
+  resource_group_name  = azurerm_resource_group.rg.name
+  api_management_name  = azurerm_api_management.apim.name
+  display_name         = "frontdoor-header-id"
+  value                = azurerm_cdn_frontdoor_profile.afd.resource_guid
+}

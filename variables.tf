@@ -86,6 +86,12 @@ variable "open_ai_instances" {
   }
 }
 
+variable "client_app_names" {
+  description = "List of client app names"
+  type        = list(string)
+  default     = ["Client1", "Client2"]
+}
+
 variable "afd_host_name_prefix" {
   description = "The prefix for the .azurefd.net hostname"
   type        = string

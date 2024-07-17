@@ -9,6 +9,7 @@ apim_units                  = 1
 open_ai_model               = "gpt-35-turbo"
 open_ai_model_version       = "0613"
 open_ai_capacity            = 5
+client_app_names            = [ "Client1", "Client2" ]
 afd_host_name_prefix        = "apimdeveast01"
 waf_mode                    = "Prevention"
 waf_policy_name             = "wafapimdeveast01"

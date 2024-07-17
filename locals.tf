@@ -4,6 +4,9 @@ locals {
 
   apim_sku = join("_", [var.apim_sku, var.apim_units])
 
+  product_groups = toset(["developers", "guests"])
+  client_apps = toset(var.client_app_names)
+
   tags = merge(
     var.tags,
     tomap(

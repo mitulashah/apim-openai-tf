@@ -82,6 +82,44 @@ resource "azurerm_api_management_api" "open_ai" {
   }
 }
 
+resource "azurerm_api_management_product" "apim_product" {
+  product_id            = "aoai-product"
+  api_management_name   = azurerm_api_management.apim.name
+  resource_group_name   = azurerm_resource_group.rg.name
+  display_name          = "Azure OpenAI API Product"
+  subscription_required = true
+  approval_required     = false
+  published             = true
+}
+
+resource "azurerm_api_management_product_group" "apim_product_group_dev" {
+
+  for_each = local.product_groups
+
+  product_id          = azurerm_api_management_product.apim_product.product_id
+  group_name          = each.key
+  api_management_name = azurerm_api_management.apim.name
+  resource_group_name = azurerm_resource_group.rg.name
+}
+
+resource "azurerm_api_management_subscription" "example" {
+
+  for_each = local.client_apps
+
+  api_management_name = azurerm_api_management.apim.name
+  resource_group_name = azurerm_resource_group.rg.name
+  product_id          = azurerm_api_management_product.apim_product.id
+  display_name        = format("%s Subscription", each.key)
+  state               = "active"
+}
+
+resource "azurerm_api_management_product_api" "apim_product_api" {
+  api_name            = azurerm_api_management_api.open_ai.name
+  product_id          = azurerm_api_management_product.apim_product.product_id
+  api_management_name = azurerm_api_management.apim.name
+  resource_group_name = azurerm_resource_group.rg.name
+}
+
 # ================================================================================================== 
 # Loop through OpenAI Endpoints
 # ================================================================================================== 

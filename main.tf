@@ -134,7 +134,7 @@ resource "azurerm_cognitive_account" "open_ai" {
   kind                  = "OpenAI"
   sku_name              = "S0"
   tags                  = local.tags
-  custom_subdomain_name = format("aoai-api-%s", each.key)
+  custom_subdomain_name = format("aoai-api-%s", each.value.unique_indicator)
 
   identity {
     type = "SystemAssigned"
